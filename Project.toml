@@ -1,0 +1,7 @@
+name = "MissingStrategies"
+uuid = "e455a6d6-8373-11eb-38a5-df3e63e3f6fc"
+authors = ["Thomas Wutzler <bgctw@arcor.de>"]
+version = "0.1.0"
+
+[compat]
+julia = "1.6"
