@@ -1,5 +1,7 @@
 using Test
-using ]MissingStrategies 
+using MissingStrategies 
 
 include("missingstrategy.jl")
+
+include("handlemissings.jl")
 

@@ -4,14 +4,18 @@ in their inputs.
 ted lognormal random variables
 """
 module MissingStrategies
+using SimpleTraits
 
 export 
     MissingStrategy, HandleMissingStrategy, PassMissing, SkipMissing, ExactMissing,
-    TypedIterator, typediter
+    TypedIterator, typediter,
+    IsSuperOfMissing, IsEltypeSuperOfMissing,
+    @handlemissings
 
 
 # MissingStrategy
 include("typediterator.jl")
 include("missingstrategy.jl")
+include("handlemissings.jl")
     
 end # module
