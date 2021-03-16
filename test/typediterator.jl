@@ -1,9 +1,10 @@
 using Test
 using MissingStrategies
-using Statistics
 using SimpleTraits
 using Missings
 
+@testset "TypedIterator" begin
+    
 @testset "IsEltypeSuperOfMissing trait" begin
     xm = [1,2,missing]    
     x = [1,2]
@@ -23,7 +24,14 @@ end;
     xm = [1,2,missing]    
     T = nonmissingtype(eltype(x))
     itr = (coalesce(xi, zero(T)) for xi in xm)
-    ti = MissingStrategies.typediter(itr,T)
+    ti = typediter(T,itr)
     @test eltype(ti) === T
+    #@test Base.IteratorSize(typeof(ti)) == Base.IteratorSize(typeof(itr))
+    @test Base.IteratorSize(typeof(ti)) ∈ (Base.HasLength(), Base.HasShape{1}())
+    @test Base.IteratorEltype(typeof(ti)) === Base.HasEltype()
+    @test length(ti) == 3
+    @test size(ti) == (3,)
 end;
+
+end; # TypedIterator
 

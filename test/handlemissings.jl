@@ -20,8 +20,7 @@ freal_do_withdefault(x::AbstractVector{<:Real}) = x
 @handlemissings(freal_do, true, false)
 @handlemissings(freal_do_withdefault, true, true)
 
-@testset "handlemissings definedefault option" begin
-    # cannot be executed twice: methods are defined afterwards
+@testset "handlemissings definedefault" begin
     @test freal_do(x) == x
     @test freal_do(xa, PassMissing()) == x
     @test_throws MethodError freal_do(xa)
