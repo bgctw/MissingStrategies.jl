@@ -4,7 +4,6 @@ using SimpleTraits
 using Missings
 
 # @traitfn does not work inside @testset
-fiseltypesuperofmissing(x) = x
 @traitfn fiseltypesuperofmissing(x::::IsEltypeSuperOfMissing) = true
 @traitfn fiseltypesuperofmissing(x::::!(IsEltypeSuperOfMissing)) = false
 
