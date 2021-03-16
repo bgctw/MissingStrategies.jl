@@ -9,7 +9,7 @@ makedocs(sitename="MissingStrategies.jl",
             "Types" => "missingstrategy.md",
             "Dispatch" => "iseltypesuperofmissing.md",
             "Default" => "handlemissings.md",
-            "TypedIteraotr" => "typediter.md",
+            "TypedIterator" => "typediter.md",
          ],
          modules = [MissingStrategies],
          format = Documenter.HTML(prettyurls = false)
