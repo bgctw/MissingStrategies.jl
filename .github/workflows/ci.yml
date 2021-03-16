@@ -64,9 +64,10 @@ jobs:
             Pkg.instantiate()'
       - run: |
           julia --project=docs -e '
-            using Documenter: doctest
+            using Documenter: doctest, DocMeta
             using MissingStrategies     # change MissingStrategies to the name of your package
-            doctest(MissingStrategies)' # change MissingStrategies to the name of your package
+            DocMeta.setdocmeta!(MissingStrategies, :DocTestSetup, :(using MissingStrategies); recursive=true)
+            doctest(MissingStrategies)' 
       - run: julia --project=docs docs/make.jl
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
