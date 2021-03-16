@@ -1,15 +1,12 @@
 # MissingStrategies.jl
 
-# MissingStrategies Package
-
 ```@docs
  MissingStrategies
 ```
 
 ```@contents
-Pages = ["lognormalprops.md", "fitstats.md", "distributionvector.md", 
-"sumdist.md", "sumnormals.md","sumMissingStrategies.md",
-"missingstrategy.md", "semcor.md"]
+Pages = ["missingstrategy.md", "iseltypesuperofmissing.md", "handlemissings.md", 
+"typediter.md"]
 Depth = 2
 ```
 

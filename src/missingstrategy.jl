@@ -7,6 +7,9 @@ missing values
 - └`HandleMissingStrategy`: Abstract type: take missing values consciously into account
   - └`SkipMissing`: ignore missing values
   - └`ExactMissing`: unbiased processing 
+
+See [`@handlemissings`](@ref) on how to extend functions by methods handling
+these strategies.  
 """
 abstract type MissingStrategy end,
 struct PassMissing <: MissingStrategy end,

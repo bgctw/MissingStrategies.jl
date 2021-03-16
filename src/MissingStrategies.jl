@@ -1,7 +1,8 @@
 """
-Types supporting methods to deal with presence of missing values
-in their inputs.
-ted lognormal random variables
+Support handling of missing values 
+- by a typed hierarchy of MissingStrategies
+- a trait that helps dispatching on eltype that allows missing
+- a macro allowingn to easily extend functions by methods that deal with missings
 """
 module MissingStrategies
 using SimpleTraits
@@ -15,6 +16,7 @@ export
 
 # MissingStrategy
 include("typediterator.jl")
+include("iseltypesuperofmissing.jl")
 include("missingstrategy.jl")
 include("handlemissings.jl")
     

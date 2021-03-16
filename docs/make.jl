@@ -6,16 +6,13 @@ push!(LOAD_PATH,"../src/")
 #DocMeta.setdocmeta!(MissingStrategies, :DocTestSetup, :(using Statistics,Distributions,MissingStrategies); recursive=true)
 #DocMeta.setdocmeta!(Distributions, :DocTestSetup, :(using Statistics,Distributions,MissingStrategies); recursive=true)
 makedocs(sitename="MissingStrategies.jl",
+         doctest  = false, 
          pages = [
             "Home" => "index.md",
-            "LogNormal properties" => "lognormalprops.md",
-            "Fit to statistic" => "fitstats.md",
-            "Vector of random variables" => "distributionvector.md",
-            "Sum of random variables" => "sumdist.md",
-            "Sum Normals" => "sumnormals.md",
-            "Sum MissingStrategies" => "sumMissingStrategies.md",
-            "Strategies for missings" => "missingstrategy.md",
-            "sem correlated" => "semcor.md",
+            "Types" => "missingstrategy.md",
+            "Dispatch" => "iseltypesuperofmissing.md",
+            "Default" => "handlemissings.md",
+            "TypedIteraotr" => "typediter.md",
          ],
          modules = [MissingStrategies],
          format = Documenter.HTML(prettyurls = false)
