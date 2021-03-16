@@ -1,18 +1,5 @@
 using MissingStrategies
 
-using SimpleTraits
-@traitdef Tr{X}
-@traitimpl Tr{Int}
-@traitfn g(x::X) where {X; Tr{X}} = 2
-@traitfn g(x::X) where {X; !Tr{X}} = 3
-@traitfn g(x::::Tr) = 2
-@traitfn g(x::::(!Tr)) = 3
-g(4), g(4.0)
-
-using SimpleTraits.BaseTraits
-@traitfn f(x::::IsImmutable) = 3
-@edit f(4)
-
 function effective_n_cor(x, acf::AbstractVector, ms::MissingStrategy=PassMissing())
     ms === PassMissing() && Missing <: eltype(x) && any(ismissing.(x)) && return(missing)
     n = length(x)
