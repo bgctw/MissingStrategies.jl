@@ -11,7 +11,8 @@ export
     MissingStrategy, HandleMissingStrategy, PassMissing, SkipMissing, ExactMissing,
     TypedIterator, typediter,
     IsSuperOfMissing, IsEltypeSuperOfMissing,
-    @handlemissings, @handlemissings1, @handlemissings_pos
+    @handlemissings, @handlemissings1, @handlemissings_pos,
+    @returnmissing
 
 
 # MissingStrategy
@@ -19,5 +20,6 @@ include("typediterator.jl")
 include("iseltypesuperofmissing.jl")
 include("missingstrategy.jl")
 include("handlemissings.jl")
+include("returnmissing.jl")
     
 end # module
