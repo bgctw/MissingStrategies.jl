@@ -24,7 +24,7 @@ end;
 
 @testset "typediterator" begin
     xm = [1,2,missing]    
-    T = nonmissingtype(eltype(x))
+    T = nonmissingtype(eltype(xm))
     itr = (coalesce(xi, zero(T)) for xi in xm)
     ti = typediter(T,itr)
     @test eltype(ti) === T
@@ -34,6 +34,20 @@ end;
     @test length(ti) == 3
     @test size(ti) == (3,)
 end;
+
+@testset "Generators trait" begin
+    x = [1,2]
+    xm = [1,2,missing]    
+    xgm_nontyped = (2*xi for xi in xm)
+    #does not work with xg directly, because eltype is Any
+    @test !SimpleTraits.istrait(IsEltypeSuperOfMissing{Any})
+    @test !SimpleTraits.istrait(IsEltypeSuperOfMissing{typeof(xgm_nontyped)})
+    xg = typediter(eltype(x), 2*xi for xi in x)
+    xgm = typediter(eltype(xm), 2*xi for xi in xm)
+    @test SimpleTraits.istrait(IsEltypeSuperOfMissing{typeof(xgm)})
+    @test !SimpleTraits.istrait(IsEltypeSuperOfMissing{typeof(xg)})
+end
+
 
 end; # TypedIterator
 

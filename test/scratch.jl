@@ -50,4 +50,13 @@ using SimpleTraits
   skipmissing(x1)
 end
 
+macro m1(x)
+    :($(esc(x)))
+end
+
+macro m2(y)
+    @show @m1(y)
+    @m1(y)
+end
+
   

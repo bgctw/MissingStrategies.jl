@@ -11,7 +11,7 @@ export
     MissingStrategy, HandleMissingStrategy, PassMissing, SkipMissing, ExactMissing,
     TypedIterator, typediter,
     IsSuperOfMissing, IsEltypeSuperOfMissing,
-    @handlemissings
+    @handlemissings, @handlemissings1, @handlemissings_pos
 
 
 # MissingStrategy
