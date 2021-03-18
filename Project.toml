@@ -1,7 +1,7 @@
 name = "MissingStrategies"
 uuid = "e455a6d6-8373-11eb-38a5-df3e63e3f6fc"
 authors = ["Thomas Wutzler <bgctw@arcor.de>"]
-version = "0.1.0"
+version = "0.1.1"
 
 [deps]
 Missings = "e1d29d7a-bbdc-5cf2-9ac0-f12de2c33e28"
