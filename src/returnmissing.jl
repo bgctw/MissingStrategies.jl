@@ -16,10 +16,9 @@ true
 ```
 """
 macro returnmissing(expr)
-    sym = gensym()
     quote
-        $(sym) = $(esc(expr))
-        ismissing($sym) && return missing
-        $(sym) 
+        local val = $(esc(expr))
+        ismissing(val) && return missing
+        val 
     end
 end

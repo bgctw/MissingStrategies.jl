@@ -34,29 +34,16 @@ x1 = autocor([1,2])
 @handlemissings(autocor, true)
 autocor(xm)
 
+using MacroTools
+x = x = 1.0:0.5:2.0
 
-using SimpleTraits
-SimpleTraits.trait(IsEltypeSuperOfMissing{typeof(xm)})
-SimpleTraits.trait(IsEltypeSuperOfMissing{typeof(x)})
-SimpleTraits.trait(IsEltypeSuperOfMissing{typeof([1:2])})
-SimpleTraits.trait(IsEltypeSuperOfMissing{Any})
+@expand @m2(
+    f1(x::AbstractVector{<:Real}, lags::AbstractVector{<:Integer} = 1:3; demean=true) = 1,
+    1
+)
 
-methods(autocor, (Type{Not{IsEltypeSuperOfMissing{Union{Missing, Int64}}}}, typeof([1:2])))
-
-
-using SimpleTraits
-@traitfn function fany_itr1(x1::::IsEltypeSuperOfMissing, 
-  ::ExactMissing, x...; kwargs...) 
-  skipmissing(x1)
-end
-
-macro m1(x)
-    :($(esc(x)))
-end
-
-macro m2(y)
-    @show @m1(y)
-    @m1(y)
-end
-
-  
+@m2(
+    f1(x::AbstractVector{<:Real}, lags::AbstractVector{<:Integer} = 1:3; demean=true) = 1,
+    1
+)
+f1(x, PassMissing())
