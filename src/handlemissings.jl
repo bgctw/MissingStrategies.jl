@@ -59,7 +59,8 @@ Hence, the macro must be called twice from the top level in order to work proper
 macro handlemissings(
   fun,
   pos_missing=1, pos_strategy=pos_missing +1, type_missing=Any,
-  gens=(), 
+  gens=(),
+  defaultstrategy=nothing, 
   argstrat=:ms, salt=100
   )
   dict_forig = splitdef(fun)
@@ -73,26 +74,33 @@ macro handlemissings(
   # argsext = copy(dict_forig[:args]) # with original missing type
   # insert!(argsext, pos_strategy, :($argstrat::MissingStrategy))
   argsmext = copy(argsm)
-  insert!(argsmext, pos_strategy, :($argstrat::MissingStrategy))
+  @show defaultstrategy
+  ad_nodefault = :($(esc(argstrat))::MissingStrategy)
+  argstratdef = isnothing(defaultstrategy) ?  ad_nodefault : Expr(:kw,
+    ad_nodefault, defaultstrategy)
+  @show argstratdef
+  @show argsmext
+  insert!(argsmext, pos_strategy, argstratdef)
   # forwarding to a function with extended name for which we can apply @traitfun
   fname = esc(dict_forig[:name])
   fname_disp = esc(Symbol(String(dict_forig[:name]) * "_hm$salt"))
   xname = first(splitarg(argsm[pos_missing]))
   kwargpasses = map(x -> esc(:($x = $x)), first.(splitarg.(dict_forig[:kwargs])))
   # XX do not use eval: post how to do this properly
-  fstrats = map(gen -> eval(gen)(
-    dict_forig, fname_disp, argstrat, argnames, pos_missing, kwargpasses), 
-    (mgen.missingstrategy_nonsuperofeltype, gens.args...)
-  )
+  #ans = Expr(:block,fstrats...)
+  # fs = :(mgen.test, mgen.test)
+  # fquotes = Tuple(eval(fsym)() for fsym in fs.args)
+  # ans = Expr(:block,unblock.(fquotes)...)
+  fbase = 
   quote
 # method with new returntype of missing argument and MissingStrategy inserted
 # forwarding to function of new name with MissingStrategy at first position    
 function $fname($(argsmext...); kwargs...)::$rtype where {$(dict_forig[:whereparams]...)}
   $fname_disp($argstrat, $(argnames...); kwargs...)
 end
-# trait functions for fname_disp
-$(fstrats...)
   end # quote
+  fstrats = Tuple(eval(gen)(
+    dict_forig, fname_disp, argstrat, argnames, pos_missing, kwargpasses) 
+    for gen in (mgen.missingstrategy_nonsuperofeltype, gens.args...))
+  Expr(:block,fbase, unblock.(fstrats)...)
 end
-
-

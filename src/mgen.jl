@@ -10,6 +10,15 @@ using MissingStrategies
 #   handlemissing_collect_skip,
 #   handlemissing_skip
 
+function test(fname = :test5)
+  #fname = esc(:temp4)
+  quote
+    function $(esc(fname))()
+       "in " * String($(esc(fname)))
+    end
+  end
+end
+
 function missingstrategy_nonsuperofeltype(
   dict_forig, fname_disp, argstrat, argnames, pos_missing, kwargpasses
   )

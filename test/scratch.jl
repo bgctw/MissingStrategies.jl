@@ -37,34 +37,39 @@ autocor(xm)
 using MacroTools
 x = [1.0,2.0,missing]
 
-function f2(x::AbstractVector{<:Real}, lags::AbstractVector{<:Integer} = 1:3; demean=true)
+function f10(x::AbstractVector{<:Real}, lags::AbstractVector{<:Integer} = 1:3; demean=true)
     @info "original method with Vector(Real)"
     @show x,typeof(x),lags,demean
     x
 end
 
 @expand @handlemissings(
-    f2(x::AbstractVector{<:Real}, lags::AbstractVector{<:Integer} = 1:3; demean=true) = 1,
+    f10(x::AbstractVector{<:Real}, lags::AbstractVector{<:Integer} = 1:3; demean=true) = 1,
+    #f10(x::AbstractVector{<:Real}; demean=true) = 1,
     1,2,AbstractVector{<:Union{Missing,Real}},
-    (mgen.missingstrategy_nonsuperofeltype, mgen.passmissing_convert, mgen.handlemissing_collect_skip)
+    (mgen.missingstrategy_nonsuperofeltype, mgen.passmissing_convert, mgen.handlemissing_collect_skip),
+    PassMissing(),
 )
 
-  
+
 @handlemissings(
-    f2(x::AbstractVector{<:Real}, lags::AbstractVector{<:Integer} = 1:3; demean=true) = 1,
+    f10(x::AbstractVector{<:Real}, lags::AbstractVector{<:Integer} = 1:3; demean=true) = 1,
+    #f10(x::AbstractVector{<:Real}; demean=true) = 1,
     1,2,AbstractVector{<:Union{Missing,Real}},
-    (mgen.passmissing_convert, mgen.handlemissing_collect_skip)
+    (mgen.passmissing_convert, mgen.handlemissing_collect_skip),
+    PassMissing(),
 )
 
 
 
-methods(f2_hm100)
-f2_hm100(PassMissing(), x)
-f2(x, PassMissing())
-f2(x[1:2], PassMissing())
-f2_hm100(SkipMissing(), x)
-f2(x, SkipMissing(); demean=false)
-f2([1.,2], PassMissing())
+#methods(f10_hm100)
+f10_hm100(PassMissing(), x)
+f10(x, PassMissing())
+f10(x[1:2], PassMissing())
+f10_hm100(SkipMissing(), x)
+f10(x, SkipMissing(); demean=false)
+f10([1.,2], PassMissing())
+f10(x; demean=false)
 
 args = [1,2,3]
 pos_strategy = 1
@@ -82,6 +87,15 @@ end
 @retestset1 begin
     @test 1 == 1.0
 end
+
+ftemp(x) = x
+macro m2(sym=:asymbol)
+    quote
+        # ftemp($(esc(sym))) # prevents only from hygene substitution
+        ftemp($(QuoteNode(sym)))
+    end
+end
+@m2
 
 
   
