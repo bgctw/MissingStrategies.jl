@@ -17,10 +17,10 @@ end
 
 freal_do(x::AbstractVector{<:Real}) = x
 freal_do_withdefault(x::AbstractVector{<:Real}) = x
-@handlemissings(freal_do, true, false)
-@handlemissings(freal_do_withdefault, true, true)
+@handlemissings2(freal_do, true, false)
+@handlemissings2(freal_do_withdefault, true, true)
 
-@testset "handlemissings definedefault" begin
+@testset "handlemissings2 definedefault" begin
     @test freal_do(x) == x
     @test freal_do(xa, PassMissing()) == x
     @test_throws MethodError freal_do(xa)
@@ -29,8 +29,8 @@ end
 
 freal_itr1(x::AbstractVector{<:Real}) = x
 fany_itr1(x) = x 
-@handlemissings(fany_itr1) # do not collect or define default method
-@handlemissings(freal_itr1, true, true)
+@handlemissings2(fany_itr1) # do not collect or define default method
+@handlemissings2(freal_itr1, true, true)
 
 @testset "vectors 1" begin
     # cannot be executed twice: methods are defined afterwards
@@ -61,8 +61,8 @@ end;
 
 freal_gen1(x::AbstractVector{<:Real}) = x
 fany_gen1(x) = x
-@handlemissings(fany_gen1)
-@handlemissings(freal_gen1, true, true)
+@handlemissings2(fany_gen1)
+@handlemissings2(freal_gen1, true, true)
 
 @testset "generator 1" begin
     # cannot be executed twice: methods are defined afterwards

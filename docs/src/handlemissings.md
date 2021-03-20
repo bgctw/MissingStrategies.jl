@@ -4,6 +4,6 @@ The macro `@handlemissing` allows to easily define methods for functions that we
 default handling for `PassMissing` and `HanldeMissingStragegy`.
 
 ```@docs
-@handlemissings
+@handlemissings2
 ```
 

@@ -5,7 +5,7 @@
 ```
 
 ```@contents
-Pages = ["missingstrategy.md", "iseltypesuperofmissing.md", "handlemissings.md", 
+Pages = ["missingstrategy.md", "iseltypesuperofmissing.md", "handlemissings2.md", 
 "typediter.md"]
 Depth = 2
 ```

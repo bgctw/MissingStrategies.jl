@@ -8,7 +8,7 @@ missing values
   - └`SkipMissing`: ignore missing values
   - └`ExactMissing`: unbiased processing 
 
-See [`@handlemissings`](@ref) on how to extend functions by methods handling
+See [`@handlemissings2`](@ref) on how to extend functions by methods handling
 these strategies.  
 """
 abstract type MissingStrategy end,

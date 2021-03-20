@@ -1,188 +1,107 @@
-"""
-    @handlemissings(fun, collectskipped=false, definedefault=false)
-    
-Define several methods for function `fun` 
-that handle missing values in the elements of its first argument.
-
-The new methods dispatch on their first argument of
-trait [`IsEltypeSuperOfMissing`](@ref). 
-The second argument is of type [`MissingStrategy`](@ref).
-- `@traitfun fun(x1::::IsEltypeSuperOfMissing, ::PassMissing, ...)` 
-  returns missing if there is any missing element in x. 
-  Otherwise, it converts the type of each element to the corresponding nonmissing type
-  and calls the original function
-- `@traitfun fun(x1::::IsEltypeSuperOfMissing, ::HandleMissingStrategy, ...)` 
-  passes the first argument to `Missings.skipmissing` and optionally
-  to `Base.collect`, before calling the original function.
-- `@traitfun fun(x1::::!(IsEltypeSuperOfMissing), ::MissingStrategy, ...)` 
-  calls the original function with unchanged `x1`. This allows passing both argument types,
-  including and not including missings, to the method with a `MissingStrategy` argument.
-
-# Default method without strategy?
-By setting argument `definedefault=true` an additional method is defined:
-- `@traitfun fun(x1::::IsEltypeSuperOfMissing, ...)` forwarding
-  to the `fun(x1, PassMissing(), ...)` as a default for handling missings.
-However, if the original method has no specific type attached, then this new
-method is never called, but rather the original method is called.
-Furthermore, this can create methods which may accidentally match non-missing arguments 
-for which the original funciton threw an `MethodError` and may cause indefine 
-loop and StackOverFlow. Hence, its recommended to only define the default method,
-if the original method explicitly constrains its type to non-missing.
-
-# Notes  
-For extending or overwriting the defintitions created by `@handlemissings` the
-[`IsEltypeSuperOfMissing`](@ref) trait is useful. 
-
-Note, that supplying a generator to the first argument, 
-does not work with `@handlemissing`, because `eltype(<generator>) == Any`. 
-Use [`typediter`](@ref) to explicitly associate
-an eltype, which may be a supertype of Missing.
-
-# Examples
-```jldoctest; output=false
-# a function desinged with not caring for missings in xvec:
-frealvec(xvec::AbstractVector{<:Real}) = xvec
-
-@handlemissings(frealvec, true, true) # defines several new methods
-
-# define specific subtype of HandleMissingStrategy explicitly 
-using SimpleTraits
-@traitfn function frealvec(x1::::IsEltypeSuperOfMissing, 
-  ::ExactMissing, x...; kwargs...) 
-  "return exact computation here"
+macro m1(fun)
+  @info "m1"
+  dump(fun)
+  fun
 end
 
-frealvec([1,2]) # calls original method
-xm = [1,2,missing]      # caused a MethodError on original frealvec
-frealvec(xm, PassMissing()) === missing
-frealvec(xm, SkipMissing()) == frealvec([1,2]) 
-frealvec(xm) === missing     # default method forwarding to PassMissing() 
-#frealvec(1)       # beware: formerly "MethodError" now results in an indefinite loop
-frealvec(xm, ExactMissing()) == "return exact computation here"
-# output
-true
-```
-"""
-macro handlemissings(FUN, collectskipped=false, definedefault=false)
-  x1nmskip = collectskipped ? :(collect(skipmissing(x1))) : :(skipmissing(x1))
-  if definedefault 
-    defaultmissingmethod = quote
-      @traitfn function $(esc(FUN))(x1::::IsEltypeSuperOfMissing, x...; kwargs...)
-        $(esc(FUN))(x1, PassMissing(), x...; kwargs...)
-      end
-    end
-  else
-    defaultmissingmethod = :()
-  end
+macro m2(fun,pos_missing=1, pos_strategy=pos_missing +1, argstrat=:ms, salt=100)
+  dict_forig = splitdef(fun)
+  # add MissingStrategy argument at first position for extended 
+  args = dict_forig[:args]
+  argnames = first.(splitarg.(args))
+  # add MissingStrategy argument at pos_strategy 
+  argsext = copy(dict_forig[:args])
+  insert!(argsext, pos_strategy, :($argstrat::MissingStrategy))
+  # is strategy argument is inserted before missing argument adjust position TODO:test
+  if pos_missing >= pos_strategy; pos_missing += 1; end
+  # remove type from argument in question
+  argsext[pos_missing] = splitarg(argsext[pos_missing])[1]
+  rtype = get(dict_forig, :rtype, :Any)
+  # forwarding to a function with extended name for which we can apply @traitfun
+  fname = esc(dict_forig[:name])
+  fname_disp = esc(Symbol(String(dict_forig[:name]) * "_hm$salt"))
+  xname = first(splitarg(args[pos_missing]))
+  kwargpasses = passkwargs(dict_forig[:kwargs])
+  gens = (Generators.pass_convert_missing, Generators.handle_collect_skip_missing)
+  #fmiss = (dict_forig, fname_disp, argstrat, argnames, pos_missing, kwargpasses)
+  #fskip = (dict_forig, fname_disp, argstrat, argnames, pos_missing, kwargpasses)
+  fstrats = map(gen -> gen(dict_forig, fname_disp, argstrat, argnames, pos_missing, kwargpasses),gens)
   quote
-$defaultmissingmethod
-@traitfn function $(esc(FUN))(x1::::!(IsEltypeSuperOfMissing), 
-  ::MissingStrategy, x...; kwargs...)
-    # call the original function without missing strategy
-    $(esc(FUN))(x1, x...; kwargs...)
+function $fname($(argsext...); kwargs...)::$rtype where {$(dict_forig[:whereparams]...)}
+  $fname_disp($argstrat, $(argnames...); kwargs...)
 end
-@traitfn function $(esc(FUN))(x1::::IsEltypeSuperOfMissing, 
-  ::PassMissing, x...; kwargs...)
-    any(ismissing.(x1)) && return(missing)
-    x1nm = convert.(nonmissingtype(eltype(x1)),x1)
-    Missing <: typeof(x1nm) && error("could not convert to nonmissing type")
-    $(esc(FUN))(x1nm, x...; kwargs...)
-end
-@traitfn function $(esc(FUN))(x1::::IsEltypeSuperOfMissing, 
-  ::HandleMissingStrategy, x...; kwargs...)
-    x1nm = $x1nmskip
-    Missing <: typeof(x1nm) && error("could not convert to nonmissing type")
-    return($(esc(FUN))(x1nm, x...; kwargs...))
-end
+$(fstrats...)
   end # quote
 end
 
-"""
-  @handlemissings1(FUN, posstrategy=2, collectskipped=false, definedefault=false)
+function passkwargs(kwargs)
+  map(x -> esc(:($x = $x)), first.(splitarg.(kwargs)))
+end
 
-Similar to [`@handlemissings`](@ref) 
-but inserting the MissingStrategy at the first position.
+module Generators
 
-For example, `@handlemissings1(f1(x))` creates functions
-- `f1(::PassMissing, x::::IsEltypeSuperOfMissing, ...)` etc. rather than
-- `f1(x::::IsEltypeSuperOfMissing, ::PassMissing, ...)` etc. rather than
-"""
-macro handlemissings1(FUN, collectskipped=false, definedefault=false)
-  x1nmskip = collectskipped ? :(collect(skipmissing(x1))) : :(skipmissing(x1))
-  if definedefault 
-    defaultmissingmethod = quote
-      @traitfn function $(esc(FUN))(x1::::IsEltypeSuperOfMissing, x...; kwargs...)
-        $(esc(FUN))(PassMissing(), x1, x...; kwargs...)
-      end
-    end
-  else
-    defaultmissingmethod = :()
-  end
+function pass_missing(dict_forig, fname_disp, argstrat, argnames, pos_missing, kwargpasses)
+  args = dict_forig[:args]
+  xname = argnames[pos_missing]
+  fname_orig = esc(dict_forig[:name])
   quote
-$defaultmissingmethod
-@traitfn function $(esc(FUN))(::MissingStrategy, x1::::!(IsEltypeSuperOfMissing), 
-  x...; kwargs...)
-    # call the original function without missing strategy
-    $(esc(FUN))(x1, x...; kwargs...)
-end
-@traitfn function $(esc(FUN))(::PassMissing, x1::::IsEltypeSuperOfMissing, 
-  x...; kwargs...)
-    any(ismissing.(x1)) && return(missing)
-    x1nm = convert.(nonmissingtype(eltype(x1)),x1)
-    Missing <: typeof(x1nm) && error("could not convert to nonmissing type")
-    $(esc(FUN))(x1nm, x...; kwargs...)
-end
-@traitfn function $(esc(FUN))(::HandleMissingStrategy, x1::::IsEltypeSuperOfMissing, 
-  x...; kwargs...)
-    x1nm = $x1nmskip
-    Missing <: typeof(x1nm) && error("could not convert to nonmissing type")
-    return($(esc(FUN))(x1nm, x...; kwargs...))
-end
+    @traitfn function $fname_disp($argstrat::PassMissing,
+      $(args[1:(pos_missing-1)]...),
+      $(xname)::::IsEltypeSuperOfMissing,
+      $(args[(pos_missing+1):end]...);
+      $(dict_forig[:kwargs]...)
+      ) where {$(dict_forig[:whereparams]...)}
+      any(ismissing.($xname)) && return missing
+      $fname_orig($(argnames...);$(kwargpasses...)) 
+    end # traitfn
   end # quote
-end
+end  
 
-"""
-  @handlemissings_pos(FUN, posstrategy=2, collectskipped=false, definedefault=false)
-
-Similar to `@handlemissings` but with additionally specifying the position of the
-argument for the missing strategy.
-
-For example, `@handlemissings_pos(f1(x,y),3)` creates functions
-- `f1(x::::IsEltypeSuperOfMissing, y..., ::PassMissing)` etc. rather than
-- `f1(x::::IsEltypeSuperOfMissing, ::PassMissing, y...)` etc. rather than
-"""
-macro handlemissings_pos(FUN, pos_strategy, collectskipped=false, definedefault=false)
-  pos_strategy < 3 :(error("for positions 1 or two use handlemissings1 or handlemissings"))
-  nvarg = pos_strategy - 1
-  x1nmskip = collectskipped ? :(collect(skipmissing(x1))) : :(skipmissing(x1))
-  if definedefault 
-    defaultmissingmethod = quote
-      @traitfn function $(esc(FUN))(x1::::IsEltypeSuperOfMissing, xv::Vararg{Any,$nvarg},x...; kwargs...)
-        $(esc(FUN))(x1, xv..., PassMissing(), x...; kwargs...)
-      end
-    end
-  else
-    defaultmissingmethod = :()
-  end
+function pass_convert_missing(dict_forig, fname_disp, argstrat, argnames, pos_missing, kwargpasses)
+  args = dict_forig[:args]
+  xname = argnames[pos_missing]
+  fname_orig = esc(dict_forig[:name])
   quote
-$defaultmissingmethod
-@traitfn function $(esc(FUN))(x1::::!(IsEltypeSuperOfMissing), xv::Vararg{Any,$nvarg},
-  ::MissingStrategy, x...; kwargs...)
-    # call the original function without missing strategy
-    $(esc(FUN))(x1, xv..., x...; kwargs...)
-end
-@traitfn function $(esc(FUN))(x1::::IsEltypeSuperOfMissing, xv::Vararg{Any,$nvarg}, 
-  ::PassMissing, x...; kwargs...)
-    any(ismissing.(x1)) && return(missing)
-    x1nm = convert.(nonmissingtype(eltype(x1)),x1)
-    Missing <: typeof(x1nm) && error("could not convert to nonmissing type")
-    $(esc(FUN))(x1nm, xv..., x...; kwargs...)
-end
-@traitfn function $(esc(FUN))(x1::::IsEltypeSuperOfMissing, xv::Vararg{Any,$nvarg}, 
-  ::HandleMissingStrategy, x...; kwargs...)
-    x1nm = $x1nmskip
-    Missing <: typeof(x1nm) && error("could not convert to nonmissing type")
-    return($(esc(FUN))(x1nm, xv..., x...; kwargs...))
-end
+    @traitfn function $fname_disp($argstrat::PassMissing,
+      $(args[1:(pos_missing-1)]...),
+      $(xname)::::IsEltypeSuperOfMissing,
+      $(args[(pos_missing+1):end]...);
+      $(dict_forig[:kwargs]...)
+      ) where {$(dict_forig[:whereparams]...)}
+      any(ismissing.($xname)) && return missing
+      x1nm = convert.(nonmissingtype(eltype($xname)),$xname)
+      Missing <: typeof(x1nm) && error("could not convert to nonmissing type") 
+      $fname_orig(
+        $(argnames[1:(pos_missing-1)]...),
+        x1nm,
+        $(argnames[(pos_missing+1):end]...);
+        $(kwargpasses...)
+      )
+    end # traitfn
   end # quote
-end
+end  
+
+function handle_collect_skip_missing(dict_forig, fname_disp, argstrat, argnames, pos_missing, kwargpasses)
+  args = dict_forig[:args]
+  xname = argnames[pos_missing]
+  fname_orig = esc(dict_forig[:name])
+  quote
+    @traitfn function $fname_disp($argstrat::HandleMissingStrategy,
+      $(args[1:(pos_missing-1)]...),
+      $(xname)::::IsEltypeSuperOfMissing,
+      $(args[(pos_missing+1):end]...);
+      $(dict_forig[:kwargs]...)
+      ) where {$(dict_forig[:whereparams]...)}
+      x1nm = collect(skipmissing($xname))
+      $fname_orig(
+        $(argnames[1:(pos_missing-1)]...),
+        x1nm,
+        $(argnames[(pos_missing+1):end]...);
+        $(kwargpasses...)
+      )
+    end # traitfn
+  end # quote
+end  
+
+
+end # module Generators

@@ -15,7 +15,7 @@ f1real_do_withdefault(x::AbstractVector{<:Real}) = x
 @handlemissings1(f1real_do, true, false)
 @handlemissings1(f1real_do_withdefault, true, true)
 
-@testset "hm1 - handlemissings definedefault" begin
+@testset "hm1 - handlemissings2 definedefault" begin
     @test f1real_do(x) == x
     @test f1real_do(PassMissing(), xa) == x
     @test_throws MethodError f1real_do(xa)
