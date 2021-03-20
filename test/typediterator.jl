@@ -35,7 +35,7 @@ end;
     @test size(ti) == (3,)
 end;
 
-@testset "Generators trait" begin
+@testset "mgen trait" begin
     x = [1,2]
     xm = [1,2,missing]    
     xgm_nontyped = (2*xi for xi in xm)

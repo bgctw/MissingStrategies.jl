@@ -11,18 +11,19 @@ export
     MissingStrategy, HandleMissingStrategy, PassMissing, SkipMissing, ExactMissing,
     TypedIterator, typediter,
     IsSuperOfMissing, IsEltypeSuperOfMissing,
-    @handlemissings2, @handlemissings1, @handlemissings_pos,
+    #@handlemissings2, @handlemissings1, @handlemissings_pos,
     @returnmissing,
-    @m2,
-    Generators
+    @handlemissings, @handlemissings_any, @handlemissings_typed,
+    mgen
 
 
 # MissingStrategy
 include("typediterator.jl")
 include("iseltypesuperofmissing.jl")
 include("missingstrategy.jl")
+include("mgen.jl")
 include("handlemissings.jl")
-include("handlemissings2.jl")
+#include("handlemissings2.jl")
 include("returnmissing.jl")
     
 end # module

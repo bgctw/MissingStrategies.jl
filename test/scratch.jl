@@ -37,22 +37,34 @@ autocor(xm)
 using MacroTools
 x = [1.0,2.0,missing]
 
-@expand @m2(f5(x::AbstractVector{<:Real}, lags::AbstractVector{<:Integer} = 1:3; demean=true) = 1)
-
-@m2(f5(x::AbstractVector{<:Real}, lags::AbstractVector{<:Integer} = 1:3; demean=true) = 1)
-
-function f5(x::AbstractVector{<:Real}, lags::AbstractVector{<:Integer} = 1:3; demean=true)
-  @show x,lags,demean
-  x
+function f2(x::AbstractVector{<:Real}, lags::AbstractVector{<:Integer} = 1:3; demean=true)
+    @info "original method with Vector(Real)"
+    @show x,typeof(x),lags,demean
+    x
 end
 
-methods(f5_hm100)
-f5_hm100(PassMissing(), x)
-f5(x, PassMissing())
-f5(x[1:2], PassMissing())
-f5_hm100(SkipMissing(), x)
-f5(x, SkipMissing(); demean=false)
-# TODO f5([1.,2], PassMissing())
+@expand @handlemissings(
+    f2(x::AbstractVector{<:Real}, lags::AbstractVector{<:Integer} = 1:3; demean=true) = 1,
+    1,2,AbstractVector{<:Union{Missing,Real}},
+    (mgen.missingstrategy_nonsuperofeltype, mgen.passmissing_convert, mgen.handlemissing_collect_skip)
+)
+
+  
+@handlemissings(
+    f2(x::AbstractVector{<:Real}, lags::AbstractVector{<:Integer} = 1:3; demean=true) = 1,
+    1,2,AbstractVector{<:Union{Missing,Real}},
+    (mgen.passmissing_convert, mgen.handlemissing_collect_skip)
+)
+
+
+
+methods(f2_hm100)
+f2_hm100(PassMissing(), x)
+f2(x, PassMissing())
+f2(x[1:2], PassMissing())
+f2_hm100(SkipMissing(), x)
+f2(x, SkipMissing(); demean=false)
+f2([1.,2], PassMissing())
 
 args = [1,2,3]
 pos_strategy = 1
@@ -70,4 +82,8 @@ end
 @retestset1 begin
     @test 1 == 1.0
 end
+
+
+  
+  
 
