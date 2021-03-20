@@ -37,6 +37,7 @@ function passmissing_nonconvert(
   dict_forig, fname_disp, argstrat, argnames, pos_missing, kwargpasses
   )
   fname_orig = esc(dict_forig[:name])
+  xname = argnames[pos_missing]
   body = quote
     any(ismissing.($xname)) && return missing
     $fname_orig($(argnames...);$(kwargpasses...)) 
