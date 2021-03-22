@@ -11,6 +11,26 @@ eltype does not accepts missings.
   (`mgen.`[`handlemissing_collect_skip`](@ref)).
 - A default method (without `MissingStrategy` argument) is created that forwards to the 
   PassMissing method.
+
+# Note on default MissingStrategy
+Note, that defining a default Missingstrategy at an argument position before further 
+optional arguments behaves in a way that was not intuitive. 
+```julia
+f1(x::AbstractArray{<:Real},optarg=1:3) = x
+@handlemissings_typed(f1(x::AbstractArray{<:Real},optarg=1:3)=0,1,2,Any)
+# f1(x,ms::MissingStrategy=PassMissing(),optarg=1:3) # generated
+f1([1.0,missing], 2:4) # no method defined, rething argument ordering
+```
+In the above case you would need to call @handle_missing_typed separately
+for the method with a single and the method with two arguments to achieve 
+calling PassMissing variant and place the default missing strategy behind
+the second argument.
+```julia
+f3(x::AbstractArray{<:Real},optarg=1:3) = x
+@handlemissings_typed(f3(x::AbstractArray{<:Real})=0,1,2,Any)
+@handlemissings_typed(f3(x::AbstractArray{<:Real}, optarg)=0,1,3,Any)
+ismissing(f3([1.0,missing], 2:4))
+```
 """
 macro handlemissings_typed(
   fun,pos_missing=1, pos_strategy=pos_missing +1, type_missing=nothing,
@@ -46,8 +66,8 @@ eltype accepts missings already.
   (`mgen.`[`handlemissing_skip`](@ref)).
 
 Note, that if the original method allows `missing` in `eltype`, you need to explicitly
-pass the `PassMissing()` strategy. A potential default method would not be called,
-because the original method takes precedence in matching the arguments.
+pass the `PassMissing()` strategy. A potential default method would match the original
+method and either not be called at all or call itself recursively causing an infinite loop.
 """
 macro handlemissings_any(
   fun, pos_missing=1, pos_strategy=pos_missing +1, type_missing=Any,
@@ -58,10 +78,10 @@ macro handlemissings_any(
   dict_forig = splitdef(fun)
   type_nonmissing = eval(splitarg(dict_forig[:args][pos_missing])[2])
   !(eltype(type_nonmissing) == Any) || 
-  SimpleTraits.istrait(IsEltypeSuperOfMissing{type_nonmissing}) && warning(
+  SimpleTraits.istrait(IsEltypeSuperOfMissing{type_nonmissing}) && @warn(
       "Element type ($type_nomissing) does not accept missings. " *
       "Did you want to use handlemissings_any?")
-  !isnothing(defaultstrategy) && warning(
+  !isnothing(defaultstrategy) && @warn(
     "Specified default strategy, but this will not be called, because original " *
     "method method matches alreay.")
   handlemissings(fun, pos_missing, pos_strategy, type_missing,
@@ -116,8 +136,8 @@ function handlemissings(
   # insert!(argsext, pos_strategy, :($argstrat::MissingStrategy))
   argsmext = copy(argsm)
   ad_nodefault = :($argstrat::MissingStrategy)
-  argstratdef = isnothing(defaultstrategy) ?  ad_nodefault : Expr(:kw,
-    ad_nodefault, defaultstrategy)
+  argstratdef = (isnothing(defaultstrategy) || defaultstrategy == :nothing) ? 
+    ad_nodefault : Expr(:kw, ad_nodefault, defaultstrategy)
   insert!(argsmext, pos_strategy, argstratdef)
   # forwarding to a function with extended name for which we can apply @traitfun
   fname = esc(dict_forig[:name])
@@ -131,10 +151,11 @@ function $fname($(argsmext...); kwargs...) where {$(dict_forig[:whereparams]...)
   $fname_disp($argstrat, $(argnames...); kwargs...)
 end)
   # TODO ask how to avoid eval
-  @show gens
+  #@show gens
   fstrats = Tuple(eval(gen)(
     dict_forig, fname_disp, argstrat, argnames, pos_missing, kwargpasses) 
     for gen in (mgen.missingstrategy_nonsuperofeltype, gens.args...))
+  #fstrats = [()] # debugging
   Expr(:block,fbase, unblock.(fstrats)...)
 end
 
