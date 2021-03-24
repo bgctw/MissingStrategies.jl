@@ -1,7 +1,7 @@
 name = "MissingStrategies"
 uuid = "e455a6d6-8373-11eb-38a5-df3e63e3f6fc"
 authors = ["Thomas Wutzler <bgctw@arcor.de>"]
-version = "0.1.1"
+version = "0.2"
 
 [deps]
 MacroTools = "1914dd2f-81c6-5fcd-8719-6d5c9610ff09"
