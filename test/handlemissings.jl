@@ -12,7 +12,7 @@ x = [1,2]           # type not allowing for missing
 xa = allowmissing(x) # type allowing for missing, but no missing present
 xacomplex = allowmissing(xa.+0im) # complex argument (otherwise like xa)
 
-freal_do(x::AbstractVector{<:Real}, opt::AbstractVector{<:Real}=0.0:0.5:1.0; 
+freal_do(x::AbstractVector{<:Real}, ms::AbstractVector{<:Real}=0.0:0.5:1.0; 
     demean=false) = x
 
 # @test_throws does not handle macro
@@ -22,25 +22,16 @@ freal_do(x::AbstractVector{<:Real}, opt::AbstractVector{<:Real}=0.0:0.5:1.0;
 # )
 
 @handlemissings_typed(
-    freal_do(x::AbstractVector{<:Real}, opt::AbstractVector{<:Real}=0.0:0.5:1.0; 
-        demean=false) = x,
+    freal_do(x::AbstractVector{<:Real}, ms::AbstractVector{<:Real}=0.0:0.5:1.0; 
+        demean=false) = 0,
     1,2,AbstractVector{<:Union{Missing,<:Real}},
 )
 
 (
-@expand @handlemissings_typed(
+tmp2 = @macroexpand @handlemissings_typed(
     freal_do(x::AbstractVector{<:Real}, opt::AbstractVector{<:Real}=0.0:0.5:1.0; 
         demean=false) = x,
-    1,2,AbstractVector{<:Union{Missing,<:Real}},
-    (mgen.passmissing_nonconvert, mgen.handlemissing_skip)
-)
-);
-
-(
-@expand @handlemissings(
-    freal_do(x::AbstractVector{<:Real}, opt::AbstractVector{<:Real}=0.0:0.5:1.0) = x,
-    1,2,AbstractVector{<:Union{Missing,<:Real}},
-    (mgen.passmissing_nonconvert, mgen.handlemissing_skip)
+    1,2,AbstractVector{<:Union{Missing,<:Real}}
 )
 );
 
@@ -168,7 +159,8 @@ freal_do_pos(x::AbstractVector{<:Real}, opt::AbstractVector{<:Real}=0.0:0.5:1.0;
     # missing type without strategy - no defined default method
     @test_throws MethodError  freal_do_pos(xm; demean=false)
     # not accepting complex numbers
-    @test_throws MethodError freal_do_pos(allowmissing(allowmissing([1,2].+0im)), SkipMissing())
+    @test_throws MethodError freal_do_pos(
+        allowmissing(allowmissing([1,2].+0im)), SkipMissing())
 end;
 
     

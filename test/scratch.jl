@@ -37,15 +37,15 @@ autocor(xm)
 using MacroTools
 x = [1.0,2.0,missing]
 
-function f11(x::AbstractVector{<:Real}, lags::AbstractVector{<:Integer} = 1:3; demean=true)
+function f16(x::AbstractVector{<:Real}, lags::AbstractVector{<:Integer} = 1:3; demean=true)
     @info "original method with Vector(Real)"
     @show x,typeof(x),lags,demean
     x
 end
 
 @expand @handlemissings(
-    f11(x::AbstractVector{<:Real}, lags::AbstractVector{<:Integer} = 1:3; demean=true) = 1,
-    #f11(x::AbstractVector{<:Real}; demean=true) = 1,
+    f16(x::AbstractVector{<:Real}, lags::AbstractVector{<:Integer} = 1:3; demean=true) = 1,
+    #f16(x::AbstractVector{<:Real}; demean=true) = 1,
     1,2,AbstractVector{<:Union{Missing,Real}},
     (mgen.missingstrategy_nonsuperofeltype, mgen.passmissing_convert, mgen.handlemissing_collect_skip),
     PassMissing(),
@@ -53,51 +53,82 @@ end
 
 
 @handlemissings(
-    f11(x::AbstractVector{<:Real}, lags::AbstractVector{<:Integer} = 1:3; demean=true) = 1,
-    #f11(x::AbstractVector{<:Real}; demean=true) = 1,
+    f16(x::AbstractVector{<:Real}, lags::AbstractVector{<:Integer} = 1:3; demean=true) = 1,
+    #f16(x::AbstractVector{<:Real}; demean=true) = 1,
     1,2,AbstractVector{<:Union{Missing,Real}},
     (mgen.passmissing_convert, mgen.handlemissing_collect_skip),
     PassMissing(),
 )
 
-
-
 #methods(f11_hm100)
 f11_hm100(PassMissing(), x)
-f11(x, PassMissing())
-f11(x[1:2], PassMissing())
+f16(x, PassMissing())
+f16(x[1:2], PassMissing())
 f11_hm100(SkipMissing(), x)
-f11(x, SkipMissing(); demean=false)
-f11([1.,2], PassMissing())
-f11(x; demean=false)
+f16(x, SkipMissing(); demean=false)
+f16([1.,2], PassMissing())
+f16(x; demean=false)
 
-args = [1,2,3]
-pos_strategy = 1
-args[1:(pos_strategy-1)],args[(pos_strategy+1):end]
-pos_strategy = 2
-args[1:(pos_strategy-1)],args[(pos_strategy+1):end]
-pos_strategy = 3
-args[1:(pos_strategy-1)],args[(pos_strategy+1):end]
-
-
-using Test
-macro retestset1(fdisp1)
-    :(@testset$(Expr(fdisp1.head,esc.(fdisp1.args)...)))
-end
-@retestset1 begin
-    @test 1 == 1.0
-end
-
-ftemp(x) = x
-macro m2(sym=:asymbol)
+d = Dict(:a=>1, :b=>2)
+macro m1(d)
+    @show d
     quote
-        # ftemp($(esc(sym))) # prevents only from hygene substitution
-        ftemp($(QuoteNode(sym)))
+        $d[:a]
     end
 end
-@m2
+@macroexpand @m1(d)
+@m1 d
+
+using MissingStrategies.mgen
+using MacroTools
+
+# macro withinfo
+d = Dict(:a=1, :b=2)
+tmp1 = :(mgen.@forwarder 1)
+@eval $tmp1
+tmp2 = @eval mgen.@withinfo(mgen.var"@forwarder", $d)
+@eval $tmp2
+
+f16(x::AbstractVector{<:Real}, lags::AbstractVector{<:Integer} = 1:3; demean=true) = x
+
+info = mgen.@getdispatchinfo(
+    f16(x::AbstractVector{<:Real}, lags::AbstractVector{<:Integer} = 1:3; demean=true) = 1,
+    #f16(x::AbstractVector{<:Real}; demean=true) = 1,
+    1,2,AbstractVector{<:Union{Missing,Real}},
+    PassMissing(),
+)
+
+@expand mgen.@getdispatchinfo(
+    f16(x::AbstractVector{<:Real}, lags::AbstractVector{<:Integer} = 1:3; demean=true) = 1,
+    #f16(x::AbstractVector{<:Real}; demean=true) = 1,
+    1,2,AbstractVector{<:Union{Missing,Real}},
+    PassMissing(),
+)
+
+function m1(fun, gens = (mgen.forwarder, mgen.missingstrategy_notsuperofeltype))
+    dinfo = mgen.getdispatchinfo(
+        fun,
+        1,2,AbstractVector{<:Union{Missing,Real}},
+        PassMissing(),
+    )
+    # quote
+    #     $(mgen.forwarder(;d...))
+    #     $(mgen.missingstrategy_notsuperofeltype(;d...))
+    # end
+    exp = ntuple(i->gens[i](;dinfo...), length(gens))
+    Expr(:block, exp...)
+end
+m1(
+    :(f16(x::AbstractVector{<:Real}, lags::AbstractVector{<:Integer} = 1:3; demean=true) = 1)
+)
+macro m1(fun); m1(fun);m1(fun) end
+@expand @m1(
+    f16(x::AbstractVector{<:Real}, lags::AbstractVector{<:Integer} = 1:3; demean=true) = 1,
+)
+tmp2 = @m1(
+    f16(x::AbstractVector{<:Real}, lags::AbstractVector{<:Integer} = 1:3; demean=true) = 1,
+)
 
 
-  
-  
-
+x = [1.0, 2.0]
+f16(x, PassMissing())
