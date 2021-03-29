@@ -7,7 +7,7 @@ using MacroTools: @expand
 
 
 
-xm = [1,2,missing]  # wiht missing
+xm = [1,2,missing]  # with missing
 x = [1,2]           # type not allowing for missing
 xa = allowmissing(x) # type allowing for missing, but no missing present
 xacomplex = allowmissing(xa.+0im) # complex argument (otherwise like xa)
@@ -24,14 +24,14 @@ freal_do(x::AbstractVector{<:Real}, ms::AbstractVector{<:Real}=0.0:0.5:1.0;
 @handlemissings_typed(
     freal_do(x::AbstractVector{<:Real}, ms::AbstractVector{<:Real}=0.0:0.5:1.0; 
         demean=false) = 0,
-    1,2,AbstractVector{<:Union{Missing,<:Real}},
+    1,2,AbstractVector{<:Union{Missing,<:Real}}, PassMissing(), mstrat
 )
 
 (
 tmp2 = @macroexpand @handlemissings_typed(
-    freal_do(x::AbstractVector{<:Real}, opt::AbstractVector{<:Real}=0.0:0.5:1.0; 
+    freal_do(x::AbstractVector{<:Real}, ms::AbstractVector{<:Real}=0.0:0.5:1.0; 
         demean=false) = x,
-    1,2,AbstractVector{<:Union{Missing,<:Real}}
+    1,2,AbstractVector{<:Union{Missing,<:Real}}, PassMissing(), mstrat
 )
 );
 
@@ -163,7 +163,34 @@ freal_do_pos(x::AbstractVector{<:Real}, opt::AbstractVector{<:Real}=0.0:0.5:1.0;
         allowmissing(allowmissing([1,2].+0im)), SkipMissing())
 end;
 
-    
+
+freal_do_stub(x::AbstractVector{<:Real}, opt::AbstractVector{<:Real}=0.0:0.5:1.0; 
+    demean=false) = x
+#@macroexpand1 
+@handlemissings_stub(
+    freal_do_stub(x::AbstractVector{<:Real}, opt::AbstractVector{<:Real}=0.0:0.5:1.0; 
+        demean=false) = x,
+    1,2,AbstractVector{<:Union{Missing,<:Real}}
+)
+@testset "handlemissings_stub" begin
+    # original method
+    @test @inferred freal_do_stub(x) == x
+    # nonmissing type with strategy
+    @test @inferred(freal_do_stub(x, PassMissing())) == x
+    # others are not defined for freal_do_strub_hm
+    # missing value passmising
+    @test_throws MethodError freal_do_stub(xm, PassMissing())
+    # missing type but no missings 
+    @test_throws MethodError freal_do_stub(xa, PassMissing())
+    # missing skipvalue - converted type
+    @test_throws MethodError freal_do_stub(xm, SkipMissing(); demean=false)
+    # missing type withoug strategy
+    @test_throws MethodError freal_do_stub(xm; demean=false)
+    # not accepting complex numbers
+    @test_throws MethodError freal_do_stub(allowmissing(allowmissing([1,2].+0im)), SkipMissing())
+end;
+
+
 
 
 

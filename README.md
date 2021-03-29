@@ -10,4 +10,4 @@ Support handling of missing values by
 - a trait that helps dispatching on eltype that allows missing
 - a macro allowing to easily extend functions by methods that deal with missings
 
-see [example in documentation](https://bgctw.github.io/MissingStrategies.jl/dev/handlemissings2.html)
+see [example in documentation](https://bgctw.github.io/MissingStrategies.jl/dev/handlemissings.html)

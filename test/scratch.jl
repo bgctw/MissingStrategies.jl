@@ -27,60 +27,11 @@ xm = [1,2,missing]
 x = [1,2]
 using Missings, MissingStrategies, StatsBase
 import StatsBase: autocor
-#@handlemissings2(autocor)
-@handlemissings2(autocor, true, false)
-autocor(xm) # not defined 
-x1 = autocor([1,2])
-@handlemissings2(autocor, true)
-autocor(xm)
 
 using MacroTools
 x = [1.0,2.0,missing]
 
-function f16(x::AbstractVector{<:Real}, lags::AbstractVector{<:Integer} = 1:3; demean=true)
-    @info "original method with Vector(Real)"
-    @show x,typeof(x),lags,demean
-    x
-end
-
-@expand @handlemissings(
-    f16(x::AbstractVector{<:Real}, lags::AbstractVector{<:Integer} = 1:3; demean=true) = 1,
-    #f16(x::AbstractVector{<:Real}; demean=true) = 1,
-    1,2,AbstractVector{<:Union{Missing,Real}},
-    (mgen.missingstrategy_nonsuperofeltype, mgen.passmissing_convert, mgen.handlemissing_collect_skip),
-    PassMissing(),
-)
-
-
-@handlemissings(
-    f16(x::AbstractVector{<:Real}, lags::AbstractVector{<:Integer} = 1:3; demean=true) = 1,
-    #f16(x::AbstractVector{<:Real}; demean=true) = 1,
-    1,2,AbstractVector{<:Union{Missing,Real}},
-    (mgen.passmissing_convert, mgen.handlemissing_collect_skip),
-    PassMissing(),
-)
-
-#methods(f11_hm100)
-f11_hm100(PassMissing(), x)
-f16(x, PassMissing())
-f16(x[1:2], PassMissing())
-f11_hm100(SkipMissing(), x)
-f16(x, SkipMissing(); demean=false)
-f16([1.,2], PassMissing())
-f16(x; demean=false)
-
-d = Dict(:a=>1, :b=>2)
-macro m1(d)
-    @show d
-    quote
-        $d[:a]
-    end
-end
-@macroexpand @m1(d)
-@m1 d
-
 using MissingStrategies.mgen
-using MacroTools
 
 # macro withinfo
 d = Dict(:a=1, :b=2)
@@ -132,3 +83,32 @@ tmp2 = @m1(
 
 x = [1.0, 2.0]
 f16(x, PassMissing())
+
+f10(ms::Union{Nothing,MissingStrategy}) = isnothing(ms) ? nothing : something(ms)
+
+f10(nothing)
+
+using MissingStrategies
+macro m1(tmp=:(PassMissing()))
+    @show tmp, typeof(tmp)
+    QuoteNode(tmp)
+end
+tmp2 = @m1()
+tmp2 = @m1(PassMissing())
+dump(Meta.parse("PassMissing()"))
+
+
+module test
+    macro m1()
+        __module__
+    end
+    macro m1_esc()
+        esc(__module__)
+    end
+    f1() = @m1
+    f1_esc() = @m1_esc
+end
+test.@m1
+test.f1()
+test.f1_esc()
+

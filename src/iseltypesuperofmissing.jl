@@ -5,7 +5,7 @@ excluding `Any`.
 This allows dispatching on any Collection (Iterator, Vector, Tuple) that
 may contain missing elements.
 
-See example of [`@handlemissings2`](@ref) for an application.
+See example of [`@handlemissings_stub`](@ref) for an application.
 """
 @traitdef IsEltypeSuperOfMissing{X}
 iseltypesuperofmissing(X) = (eltype(X) !== Any) && (Missing <: eltype(X))
