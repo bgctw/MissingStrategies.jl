@@ -190,7 +190,14 @@ freal_do_stub(x::AbstractVector{<:Real}, opt::AbstractVector{<:Real}=0.0:0.5:1.0
     @test_throws MethodError freal_do_stub(allowmissing(allowmissing([1,2].+0im)), SkipMissing())
 end;
 
-
+@testset "tools" begin
+    @testset "unesc" begin
+        ex_bare = :x
+        ex = esc(esc(:x))
+        @test MissingStrategies.unesc(ex) == ex_bare
+    end
+    
+end;
 
 
 
