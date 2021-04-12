@@ -23,6 +23,8 @@ using Missings
 end;
 
 @testset "typediterator" begin
+    # unfortunately not itegate (teste by for, IteratorSize and IteratorEltype not
+    # recognized by CodeCov
     xm = [1,2,missing]    
     T = nonmissingtype(eltype(xm))
     itr = (coalesce(xi, zero(T)) for xi in xm)

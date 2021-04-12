@@ -10,14 +10,15 @@ using MissingStrategies
 using MacroTools
 using SimpleTraits
 
-function test(fname = :test5)
-  #fname = esc(:temp4)
-  quote
-    function $(esc(fname))()
-       "in " * String($(esc(fname)))
-    end
-  end
-end
+# # for debugging
+# function test(fname = :test5)
+#   #fname = esc(:temp4)
+#   quote
+#     function $(esc(fname))()
+#        "in " * String($(esc(fname)))
+#     end
+#   end
+# end
 
 """
     forwarder(...)

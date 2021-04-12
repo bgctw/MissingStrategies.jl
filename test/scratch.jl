@@ -112,3 +112,11 @@ test.@m1
 test.f1()
 test.f1_esc()
 
+
+using Distributed
+addprocs(2)
+B = rand(10,10);
+B2 = let B = B
+    remotecall_fetch(()->B, 2)
+end
+@fetchfrom 2 InteractiveUtils.varinfo()
