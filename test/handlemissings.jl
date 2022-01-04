@@ -5,8 +5,6 @@ using MacroTools: @expand
 # defining SimpleTraits inside @testset seems not to work
 # need to define all before the first testset
 
-
-
 xm = [1,2,missing]  # with missing
 x = [1,2]           # type not allowing for missing
 xa = allowmissing(x) # type allowing for missing, but no missing present

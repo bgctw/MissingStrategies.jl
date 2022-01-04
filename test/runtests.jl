@@ -1,10 +1,14 @@
 using Test
 using MissingStrategies 
 
-include("missingstrategy.jl")
+# the warning cannot be suppressed, because the macros need to run at top-level
 
-include("typediterator.jl")
+@testset "typediterator" begin
+    include("typediterator.jl")
+end
 
-include("handlemissings.jl")
+@testset "handlemissings" begin
+    include("handlemissings.jl")
+end
 
 
